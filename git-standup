@@ -233,7 +233,7 @@ if [[ ${option_F:=} || ! -d ".git" || -f ".git" ]]; then
   fi
 
   # Recursively search for git repositories
-  PROJECT_DIRS=$(find ${INCLUDE_LINKS} ${SEARCH_PATH} -maxdepth ${MAXDEPTH} -mindepth 0 -name .git)
+  PROJECT_DIRS=$(fd -H --max-depth ${MAXDEPTH} ${INCLUDE_LINKS} '^\.git$' ${SEARCH_PATH})
 elif [[ -f ".git" || -d ".git" ]]; then
   PROJECT_DIRS=("$(pwd)/.git")
 fi
