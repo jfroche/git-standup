@@ -259,10 +259,19 @@ for DIR in ${PROJECT_DIRS}; do
   CUR_DIR=$(pwd)
   BASENAME=$(basename "$CUR_DIR")
 
-  # continue if not a git directory
-  if [[ ! -d ".git" || -f ".git" ]]; then
+  # continue if not a git directory (supports both regular repos and worktrees)
+  # worktrees have a .git file containing "gitdir: /path/to/git/dir"
+  if [[ ! -d ".git" && ! -f ".git" ]]; then
     cd "${BASE_DIR}" || exit
     continue
+  fi
+  # verify worktree .git file points to valid git directory
+  if [[ -f ".git" ]]; then
+    WORKTREE_GITDIR=$(sed -n 's/^gitdir: //p' .git 2>/dev/null)
+    if [[ -z "$WORKTREE_GITDIR" || ! -d "$WORKTREE_GITDIR" ]]; then
+      cd "${BASE_DIR}" || exit
+      continue
+    fi
   fi
 
   AUTHOR=$(git config user.name)
