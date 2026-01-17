@@ -165,7 +165,7 @@ fi
 
 ## Set the necessary variables for standup
 SINCE="yesterday"
-MAXDEPTH=2
+MAXDEPTH=10
 INCLUDE_LINKS=
 RAN_FROM_DIR=$(pwd)
 REPORT_FILE_PATH="${RAN_FROM_DIR}/git-standup-report.txt"
