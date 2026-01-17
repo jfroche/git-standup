@@ -25,6 +25,7 @@ Usage:
   -A      - List commits after this date
   -B      - List commits before this date
   -R      - Display the author date instead of the committer date
+  -W      - Worktree mode: show only unmerged commits (commits on HEAD not in main/master)
 
 Examples:
   git standup -a "John Doe" -w "MON-FRI" -m 3
@@ -124,9 +125,9 @@ function runStandup() {
   fi
 }
 
-while getopts "hgfsd:u:a:w:m:D:A:B:LrcRFb:" opt; do
+while getopts "hgfsd:u:a:w:m:D:A:B:LrcRFWb:" opt; do
   case $opt in
-    h | d | u | a | w | m | g | D | f | s | L | r | A | B | c | R | F | b)
+    h | d | u | a | w | m | g | D | f | s | L | r | A | B | c | R | F | W | b)
       declare "option_$opt=${OPTARG:-0}"
       ;;
     \?)
@@ -288,6 +289,31 @@ for DIR in ${PROJECT_DIRS}; do
   GIT_BRANCH_FILTER="--all"
   if [[ ${option_b:=} ]]; then
     GIT_BRANCH_FILTER="--first-parent $option_b"
+  elif [[ ${option_W:=} ]]; then
+    # Worktree mode: show only unmerged commits
+    # Detect main branch (try origin/main, origin/master, main, master)
+    MAIN_BRANCH=""
+    for candidate in origin/main origin/master main master; do
+      if git rev-parse --verify "$candidate" &>/dev/null; then
+        MAIN_BRANCH="$candidate"
+        break
+      fi
+    done
+    if [[ -n "$MAIN_BRANCH" ]]; then
+      # Check if HEAD is the main branch
+      HEAD_REF=$(git rev-parse HEAD 2>/dev/null)
+      MAIN_REF=$(git rev-parse "$MAIN_BRANCH" 2>/dev/null)
+      if [[ "$HEAD_REF" == "$MAIN_REF" ]]; then
+        # On main branch, just show HEAD
+        GIT_BRANCH_FILTER="HEAD"
+      else
+        # On feature branch, show commits not in main
+        GIT_BRANCH_FILTER="HEAD --not $MAIN_BRANCH"
+      fi
+    else
+      # No main branch found, fall back to HEAD only
+      GIT_BRANCH_FILTER="HEAD"
+    fi
   fi
 
   GIT_LOG_COMMAND="git --no-pager log \
