@@ -274,6 +274,11 @@ for DIR in ${PROJECT_DIRS}; do
       continue
     fi
   fi
+  # skip bare repositories (e.g., root of bare worktree setups)
+  if [[ $(git rev-parse --is-bare-repository 2>/dev/null) == "true" ]]; then
+    cd "${BASE_DIR}" || exit
+    continue
+  fi
 
   AUTHOR=$(git config user.name)
 
